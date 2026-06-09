@@ -806,14 +806,31 @@ var CR={skin:0,hair:0,hairc:3,eyec:0,outfit:3};
 
 // ── NPCs (with waypoints & schedules) ─────────────────────────
 var NPCS=[
-  {name:'Maple',   skin:0,hair:2,hairc:0,eyec:0,outfit:0,mood:'😊',x:700, y:1280,wps:[{x:700,y:1280},{x:900,y:870},{x:500,y:580}],wpi:0,wtick:0,wdelay:300,dir:'down',frame:0,ftick:0,dx:0,dy:0,line:"Isn't it a gorgeous day? 🌸"},
-  {name:'Bob',     skin:2,hair:3,hairc:1,eyec:3,outfit:2,mood:'😴',x:1050,y:1265,wps:[{x:1050,y:1265},{x:1280,y:870},{x:600,y:600}],wpi:0,wtick:0,wdelay:420,dir:'down',frame:0,ftick:0,dx:0,dy:0,line:'*yawn* Oh hey... whassup? 😴'},
-  {name:'Goldie',  skin:1,hair:1,hairc:3,eyec:0,outfit:4,mood:'🤩',x:1300,y:1270,wps:[{x:1300,y:1270},{x:650,y:870},{x:1400,y:580}],wpi:0,wtick:0,wdelay:260,dir:'down',frame:0,ftick:0,dx:0,dy:0,line:'Great to see you!! Love your energy! 🤩'},
-  {name:'Tom',     skin:3,hair:5,hairc:4,eyec:2,outfit:6,mood:'😎',x:500, y:870, wps:[{x:500,y:870},{x:1600,y:870},{x:500,y:870}],wpi:0,wtick:0,wdelay:180,dir:'right',frame:0,ftick:0,dx:0,dy:0,line:'Just cruising around town! 😎'},
-  {name:'Mabel',   skin:0,hair:4,hairc:5,eyec:4,outfit:5,mood:'🥰',x:1100,y:580, wps:[{x:1100,y:580},{x:700,y:1270},{x:1500,y:580}],wpi:0,wtick:0,wdelay:340,dir:'down',frame:0,ftick:0,dx:0,dy:0,line:'I just love shopping here! 🛍️'},
-  {name:'Blathers', skin:0,hair:0,hairc:7,eyec:0,outfit:7,mood:'🤓',x:480, y:400, wps:[{x:480,y:400},{x:810,y:400},{x:480,y:870}],wpi:0,wtick:0,wdelay:500,dir:'right',frame:0,ftick:0,dx:0,dy:0,line:'Did you know the museum has 4,000 exhibits? 🦉'},
-  {name:'Isabelle', skin:0,hair:4,hairc:3,eyec:0,outfit:3,mood:'😄',x:980, y:870, wps:[{x:980,y:870},{x:400,y:580},{x:1600,y:870}],wpi:0,wtick:0,wdelay:200,dir:'down',frame:0,ftick:0,dx:0,dy:0,line:'Welcome! Need any help around town? 😄'},
-  {name:'Stitches', skin:0,hair:5,hairc:4,eyec:4,outfit:1,mood:'😆',x:1500,y:870, wps:[{x:1500,y:870},{x:1200,y:1270},{x:1800,y:580}],wpi:0,wtick:0,wdelay:380,dir:'left',frame:0,ftick:0,dx:0,dy:0,line:'Just beat a new high score! Want to play? 🎮'},
+  // Bridge crossings at X:300-364, 900-964, 1600-1664 (Y 1060-1150)
+  {name:'Maple',   skin:0,hair:2,hairc:0,eyec:0,outfit:0,mood:'😊',x:700, y:1280,
+   wps:[{x:700,y:1280},{x:916,y:1280},{x:916,y:1155},{x:916,y:870},{x:500,y:580}],
+   wpi:0,wtick:0,wdelay:300,dir:'down',frame:0,ftick:0,dx:0,dy:0,line:"Isn't it a gorgeous day? 🌸"},
+  {name:'Bob',     skin:2,hair:3,hairc:1,eyec:3,outfit:2,mood:'😴',x:1050,y:1265,
+   wps:[{x:1050,y:1265},{x:316,y:1265},{x:316,y:1155},{x:316,y:870},{x:600,y:600}],
+   wpi:0,wtick:0,wdelay:420,dir:'down',frame:0,ftick:0,dx:0,dy:0,line:'*yawn* Oh hey... whassup? 😴'},
+  {name:'Goldie',  skin:1,hair:1,hairc:3,eyec:0,outfit:4,mood:'🤩',x:1300,y:1270,
+   wps:[{x:1300,y:1270},{x:1616,y:1270},{x:1616,y:1155},{x:1616,y:870},{x:1400,y:580}],
+   wpi:0,wtick:0,wdelay:260,dir:'down',frame:0,ftick:0,dx:0,dy:0,line:'Great to see you!! 🤩'},
+  {name:'Tom',     skin:3,hair:5,hairc:4,eyec:2,outfit:6,mood:'😎',x:500, y:870,
+   wps:[{x:500,y:870},{x:1600,y:870},{x:500,y:870}],
+   wpi:0,wtick:0,wdelay:180,dir:'right',frame:0,ftick:0,dx:0,dy:0,line:'Just cruising around town! 😎'},
+  {name:'Mabel',   skin:0,hair:4,hairc:5,eyec:4,outfit:5,mood:'🥰',x:1100,y:580,
+   wps:[{x:1100,y:580},{x:916,y:580},{x:916,y:870},{x:916,y:1155},{x:700,y:1270}],
+   wpi:0,wtick:0,wdelay:340,dir:'down',frame:0,ftick:0,dx:0,dy:0,line:'I just love shopping here! 🛒'},
+  {name:'Blathers',skin:0,hair:0,hairc:7,eyec:0,outfit:7,mood:'🤓',x:480, y:400,
+   wps:[{x:480,y:400},{x:810,y:400},{x:810,y:580}],
+   wpi:0,wtick:0,wdelay:500,dir:'right',frame:0,ftick:0,dx:0,dy:0,line:'Did you know the museum has 4,000 exhibits? 🦉'},
+  {name:'Isabelle',skin:0,hair:4,hairc:3,eyec:0,outfit:3,mood:'😄',x:980, y:870,
+   wps:[{x:980,y:870},{x:400,y:580},{x:1600,y:870}],
+   wpi:0,wtick:0,wdelay:200,dir:'down',frame:0,ftick:0,dx:0,dy:0,line:'Welcome! Need any help around town? 😄'},
+  {name:'Stitches',skin:0,hair:5,hairc:4,eyec:4,outfit:1,mood:'😆',x:1500,y:870,
+   wps:[{x:1500,y:870},{x:1616,y:870},{x:1616,y:1155},{x:1200,y:1270}],
+   wpi:0,wtick:0,wdelay:380,dir:'left',frame:0,ftick:0,dx:0,dy:0,line:'Just beat a new high score! 🎮'},
 ];
 
 // ── STORE DATA ────────────────────────────────────────────────
@@ -1047,19 +1064,53 @@ function updateCar(){
   P.x=car.x;P.y=car.y;
 }
 
+function npcBlocked(nx,ny){
+  // River check — block unless at a bridge (X 300-364, 900-964, 1600-1664)
+  if(ny>RIVER_Y-8&&ny<RIVER_Y+RIVER_H+8){
+    var onBridge=BRIDGE_XS.some(function(bx){return nx>bx-4&&nx<bx+68;});
+    if(!onBridge)return true;
+  }
+  // Building check (shrunk hitbox — NPCs are thin)
+  for(var i=0;i<BLDS.length;i++){
+    var b=BLDS[i];
+    if(nx>b.x+6&&nx<b.x+b.w-6&&ny>b.y+10&&ny<b.y+b.h-6)return true;
+  }
+  return false;
+}
 function updateNPCs(){
-  NPCS.forEach(function(n){
+  NPCS.forEach(function(n,ni){
     n.wtick++;
     if(n.wtick>n.wdelay){
-      n.wtick=0;n.wpi=(n.wpi+1)%n.wps.length;n.wdelay=150+Math.floor(Math.random()*300);
+      n.wtick=0;n.wpi=(n.wpi+1)%n.wps.length;n.wdelay=180+Math.floor(Math.random()*280);
     }
-    var target=n.wps[n.wpi];var dx=target.x-n.x,dy=target.y-n.y;var dist=Math.sqrt(dx*dx+dy*dy);
-    if(dist>8){var spd=1.4;n.x+=dx/dist*spd;n.y+=dy/dist*spd;if(Math.abs(dx)>Math.abs(dy))n.dir=dx>0?'right':'left';else n.dir=dy>0?'down':'up';n.ftick++;if(n.ftick%12===0)n.frame=(n.frame+1)%4;}
-    else n.frame=0;
-    // Wave when player nearby
+    var target=n.wps[n.wpi];
+    var dx=target.x-n.x,dy=target.y-n.y,dist=Math.sqrt(dx*dx+dy*dy);
+    if(dist>6){
+      var spd=1.4;
+      var mx=dx/dist*spd, my=dy/dist*spd;
+      var nx2=n.x+mx, ny2=n.y+my;
+      // Try full move
+      if(!npcBlocked(nx2,ny2)){
+        n.x=nx2;n.y=ny2;
+      } else if(!npcBlocked(n.x+mx,n.y)){
+        // Slide X only
+        n.x+=mx;
+      } else if(!npcBlocked(n.x,n.y+my)){
+        // Slide Y only
+        n.y+=my;
+      }
+      // Direction
+      if(Math.abs(dx)>Math.abs(dy))n.dir=dx>0?'right':'left';
+      else n.dir=dy>0?'down':'up';
+      n.ftick++;if(n.ftick%12===0)n.frame=(n.frame+1)%4;
+    } else {
+      n.frame=0;
+      // Reached waypoint — move to next early
+      n.wpi=(n.wpi+1)%n.wps.length;n.wtick=0;
+    }
+    // Mood near player
     var pd=Math.hypot(P.x-n.x,P.y-n.y);
-    if(pd<80){n.mood=pd<50?'👋':'😊';}
-    else if(n.hunger!==undefined&&n.hunger<30){n.mood='😟';}
+    if(pd<80)n.mood=pd<50?'👋':'😊';
   });
 }
 
@@ -1158,7 +1209,7 @@ function doInteriorAction(){
   if(best){
     var ic=P.cart.some(function(c){return c.n===best.n;});
     if(ic){P.cart=P.cart.filter(function(c){return c.n!==best.n;});toast('Removed '+best.n+' from cart');}
-    else{P.cart.push(best);toast(best.n+' added to cart! 🛒');}}
+    else{P.cart.push(best);toast(best.n+' added to cart! \ud83d\uded2');}
   }
 }
 
