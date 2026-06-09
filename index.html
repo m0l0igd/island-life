@@ -485,16 +485,18 @@ function renderBuildings(ctx,VW,VH,GT,PX,PY,inCar){
 
     // Entry glow when player nearby
     if(!inCar){
-      var doorWX=wx(b.x+b.w/2), doorWY=wy(b.y+b.h-14);
-      var dist2=Math.hypot(PX-b.x-b.w/2,PY-b.y-b.h+14);
-      if(dist2<75){
-        ctx.globalAlpha=.2+.2*Math.abs(Math.sin(GT*.1));
-        ctx.fillStyle='#ffff44';ctx.beginPath();ctx.ellipse(doorWX,doorWY+8,24,8,0,0,Math.PI*2);ctx.fill();
+      var dist2=Math.hypot(PX-(b.x+b.w/2),PY-(b.y+b.h));
+      var glowX=bx+b.w/2, glowY=by+b.h-5;
+      if(dist2<130){
+        ctx.globalAlpha=.22+.22*Math.abs(Math.sin(GT*.1));
+        ctx.fillStyle='#ffff44';ctx.beginPath();ctx.ellipse(glowX,glowY,26,9,0,0,Math.PI*2);ctx.fill();
         ctx.globalAlpha=1;
-        ctx.font='bold 11px Arial';ctx.textAlign='center';
-        ctx.strokeStyle='rgba(0,0,0,.8)';ctx.lineWidth=3;
-        ctx.strokeText('A — Enter',doorWX,doorWY-20);
-        ctx.fillStyle='#fff';ctx.fillText('A — Enter',doorWX,doorWY-20);
+        var isMob=typeof isMobile!=='undefined'&&isMobile;
+        var hint=isMob?'Tap A':'E / F';
+        ctx.font='bold 12px Arial';ctx.textAlign='center';
+        ctx.strokeStyle='rgba(0,0,0,.9)';ctx.lineWidth=3;
+        ctx.strokeText(hint+' — Enter',glowX,glowY-42);
+        ctx.fillStyle='#fff';ctx.fillText(hint+' — Enter',glowX,glowY-42);
       }
     }
   });
@@ -1171,19 +1173,41 @@ function getMood(){var a=(P.hunger+P.happy+P.energy)/3;return a>80?'😄':a>65?'
 // ── INPUT ─────────────────────────────────────────────────────
 document.addEventListener('keydown',function(e){
   keys[e.code]=true;
-  if(e.code==='KeyE'||e.code==='Enter'){doAction();}
+  // E, F, or Space (when not jumping) = interact / enter
+  if(e.code==='KeyE'||e.code==='KeyF'){
+    e.preventDefault();doAction();
+  }
+  if(e.code==='Enter'){e.preventDefault();doAction();}
   if(e.code==='Escape'||e.code==='KeyQ'){doBack();}
   if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space'].includes(e.code))e.preventDefault();
+  // Space doubles as jump AND interact (jump takes priority when airborne)
+  if(e.code==='Space'){
+    if(!P.onGround&&!P.inCar&&!INT.on){
+      // handled by movement code
+    } else if(INT.on||P.inCar){
+      doAction();
+    }
+  }
 });
 document.addEventListener('keyup',function(e){delete keys[e.code];});
 
 function doAction(){
-  if(anyOpen()){return;}
+  // Close dialogue first if open
+  if(document.getElementById('dlg').style.display!=='none'){closeDlg();return;}
+  // Close any open panel
+  if(anyOpen()){closeAllPanels();return;}
   if(INT.on){doInteriorAction();return;}
-  for(var i=0;i<CARS.length;i++){var car=CARS[i];if(!car.driven&&Math.hypot(P.x-car.x,P.y-car.y)<65){enterCar(car);return;}}
   if(P.inCar){exitCar();return;}
-  for(var j=0;j<BLDS.length;j++){var b=BLDS[j];var doorX=b.x+b.w/2,doorY=b.y+b.h-14;if(Math.hypot(P.x-doorX,P.y-doorY)<90){enterBuilding(b);return;}}
-  for(var k=0;k<NPCS.length;k++){var n=NPCS[k];if(Math.hypot(P.x-n.x,P.y-n.y)<65){showDlg(n.name,n.line);return;}}
+  for(var i=0;i<CARS.length;i++){var car=CARS[i];if(!car.driven&&Math.hypot(P.x-car.x,P.y-car.y)<70){enterCar(car);return;}}
+  // Find closest building door — generous 130px radius
+  var best=null,bestD=999;
+  for(var j=0;j<BLDS.length;j++){
+    var b=BLDS[j];
+    var d=Math.hypot(P.x-(b.x+b.w/2),P.y-(b.y+b.h));
+    if(d<bestD){bestD=d;best=b;}
+  }
+  if(best&&bestD<130){enterBuilding(best);return;}
+  for(var k=0;k<NPCS.length;k++){var n=NPCS[k];if(Math.hypot(P.x-n.x,P.y-n.y)<70){showDlg(n.name,n.line);return;}}
 }
 function doBack(){if(INT.on){exitInt();return;}if(P.inCar){exitCar();return;}closeAllPanels();}
 
