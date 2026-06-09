@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Island Life 🏝️</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;font-family:'Segoe UI',Arial,sans-serif}
+body{background:#1a8cff;overflow:hidden;height:100vh;user-select:none}
+#app{position:relative;width:100vw;height:100vh;overflow:hidden}
+canvas{position:absolute;top:0;left:0}
+
+/* ── Overlays ── */
+.screen{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:20}
+.screen.active{display:flex}
+
+/* ── Title ── */
+#title-screen{background:linear-gradient(180deg,#87ceeb 0%,#b0e0ff 40%,#5dbb63 40%,#3a9142 100%)}
+.title-logo{font-size:3.2rem;font-weight:900;color:#fff;text-shadow:3px 3px 0 #0053e2,-1px -1px 0 #0053e2,1px -1px 0 #0053e2,-1px 1px 0 #0053e2;letter-spacing:2px;text-align:center}
+.title-sub{font-size:1rem;color:rgba(255,255,255,.9);margin-top:6px;text-align:center}
+.btn{background:#0053e2;color:#fff;border:none;border-radius:12px;padding:12px 32px;font-size:1rem;font-weight:700;cursor:pointer;margin:8px;transition:all .15s;box-shadow:0 4px 12px rgba(0,0,0,.25)}
+.btn:hover{background:#003db5;transform:translateY(-2px)}
+.btn:active{transform:translateY(0);background:#002a80}
+.btn.gold{background:#ffc220;color:#0053e2}
+.btn.red{background:#ea1100;color:#fff}
+.btn.green{background:#2a8703;color:#fff}
+.btn.sm{padding:7px 18px;font-size:.82rem;border-radius:8px}
+
+/* ── HUD ── */
+#hud{position:absolute;top:0;left:0;right:0;height:50px;background:rgba(0,83,226,.92);display:flex;align-items:center;padding:0 12px;gap:10px;z-index:15;backdrop-filter:blur(4px)}
+#hud-money{color:#ffc220;font-weight:900;font-size:1.05rem}
+#hud-day{color:rgba(255,255,255,.85);font-size:.78rem;margin-left:auto}
+#hud-btns{display:flex;gap:6px}
+.hbtn{background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.3);color:#fff;border-radius:8px;padding:5px 11px;font-size:.72rem;font-weight:700;cursor:pointer}
+.hbtn:hover{background:rgba(255,255,255,.28)}
+.hbtn.active{background:rgba(255,194,32,.35);border-color:#ffc220;color:#ffc220}
+
+/* ── Island ── */
+#island-view{position:absolute;top:50px;left:0;right:0;bottom:0;overflow:hidden;cursor:pointer}
+
+/* ── Character cards on island ── */
+.char-pin{position:absolute;display:flex;flex-direction:column;align-items:center;cursor:pointer;transition:transform .15s}
+.char-pin:hover{transform:scale(1.08) translateY(-4px)}
+.char-bubble{background:white;border:2px solid #0053e2;border-radius:10px;padding:3px 8px;font-size:.6rem;font-weight:700;color:#0053e2;white-space:nowrap;margin-bottom:4px;position:relative}
+.char-bubble::after{content:'';position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#0053e2}
+.char-name{font-size:.6rem;color:#fff;font-weight:700;text-shadow:1px 1px 2px rgba(0,0,0,.5);margin-top:4px}
+
+/* ── Store building ── */
+.building{position:absolute;bottom:0;cursor:pointer;transition:transform .15s}
+.building:hover{transform:scale(1.04)}
+.bld-label{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);white-space:nowrap;background:rgba(0,0,0,.7);color:#fff;font-size:.62rem;padding:2px 7px;border-radius:4px;margin-bottom:3px}
+
+/* ── Panel / modal ── */
+.panel{position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;box-shadow:0 -4px 30px rgba(0,0,0,.25);z-index:30;transform:translateY(100%);transition:transform .35s cubic-bezier(.34,1.3,.64,1);padding:18px 18px 24px;max-height:80vh;overflow-y:auto}
+.panel.open{transform:translateY(0)}
+.panel-handle{width:40px;height:4px;background:#ddd;border-radius:2px;margin:0 auto 14px}
+.panel-title{font-size:1.1rem;font-weight:900;color:#0053e2;margin-bottom:12px;text-align:center}
+.close-btn{position:absolute;top:14px;right:16px;background:#f0f0f0;border:none;border-radius:50%;width:30px;height:30px;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+
+/* ── Character creator ── */
+#creator{background:#fff;border-radius:18px;padding:22px;width:min(420px,95vw);max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.3)}
+#creator h2{font-size:1.3rem;font-weight:900;color:#0053e2;text-align:center;margin-bottom:16px}
+.creator-preview{display:flex;justify-content:center;margin-bottom:14px}
+.cr-row{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px;justify-content:center}
+.cr-label{font-size:.72rem;color:#666;font-weight:700;margin-bottom:4px;display:block}
+.cr-swatch{width:32px;height:32px;border-radius:50%;border:3px solid transparent;cursor:pointer;transition:all .15s}
+.cr-swatch.sel{border-color:#0053e2;transform:scale(1.15)}
+.cr-chip{padding:5px 12px;border-radius:20px;border:2px solid #ddd;font-size:.72rem;cursor:pointer;background:#f8f8f8;transition:all .15s}
+.cr-chip.sel{background:#0053e2;color:#fff;border-color:#0053e2}
+#cr-name{width:100%;border:2px solid #ddd;border-radius:8px;padding:8px 12px;font-size:.95rem;outline:none;margin-bottom:10px}
+#cr-name:focus{border-color:#0053e2}
+.cr-section{margin-bottom:14px}
+
+/* ── Needs bars ── */
+.need-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.need-icon{font-size:1.1rem;flex-shrink:0;width:24px}
+.need-bar-bg{flex:1;height:12px;background:#eee;border-radius:6px;overflow:hidden}
+.need-bar-fill{height:100%;border-radius:6px;transition:width .5s}
+.need-val{font-size:.7rem;color:#666;width:30px;text-align:right;flex-shrink:0}
+
+/* ── Store grid ── */
+.store-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px;margin-top:10px}
+.store-item{background:#f8f8f8;border:2px solid #eee;border-radius:10px;padding:10px 6px;text-align:center;cursor:pointer;transition:all .15s}
+.store-item:hover{border-color:#0053e2;background:#f0f5ff;transform:translateY(-2px)}
+.store-item .si-ico{font-size:1.8rem;display:block}
+.store-item .si-name{font-size:.65rem;font-weight:700;color:#333;margin:4px 0 2px}
+.store-item .si-price{font-size:.68rem;color:#2a8703;font-weight:700}
+.store-item .si-effect{font-size:.58rem;color:#888}
+
+/* ── Toast ── */
+#toast{position:fixed;top:60px;left:50%;transform:translateX(-50%);background:#0053e2;color:#fff;padding:8px 20px;border-radius:20px;font-size:.85rem;font-weight:700;z-index:100;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+
+/* ── Relationship card ── */
+.rel-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #f0f0f0}
+.rel-hearts{color:#ea1100;font-size:.85rem;letter-spacing:1px}
+
+/* ── Inventory ── */
+.inv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px;margin-top:10px}
+.inv-item{background:#f8f8f8;border:2px solid #eee;border-radius:8px;padding:8px 4px;text-align:center;cursor:pointer;transition:border-color .15s}
+.inv-item:hover{border-color:#2a8703}
+.inv-item .ii-ico{font-size:1.4rem;display:block}
+.inv-item .ii-name{font-size:.58rem;color:#555;margin-top:3px}
+
+/* ── Apartment ── */
+.apt-room{background:linear-gradient(180deg,#f0e8d8,#e8d8c0);border-radius:12px;padding:14px;min-height:140px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px;border:2px solid #c8b090}
+.furniture{font-size:2rem;cursor:pointer}
+.tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.tab{padding:6px 14px;border-radius:20px;border:2px solid #ddd;font-size:.75rem;font-weight:700;cursor:pointer;background:#f0f0f0;color:#555}
+.tab.active{background:#0053e2;color:#fff;border-color:#0053e2}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- TITLE SCREEN -->
+<div class="screen active" id="title-screen">
+  <div style="text-align:center;padding:20px">
+    <div style="font-size:4rem;margin-bottom:8px">🏝️</div>
+    <div class="title-logo">ISLAND LIFE</div>
+    <div class="title-sub">Your world. Your people. Your story.</div>
+    <div style="margin-top:30px;display:flex;flex-direction:column;align-items:center">
+      <button class="btn gold" onclick="startGame()" style="font-size:1.1rem;padding:14px 40px">▶ NEW GAME</button>
+      <button class="btn" onclick="showScreen('creator-screen')" style="margin-top:6px">✏️ Create Character</button>
+    </div>
+    <div style="margin-top:24px;font-size:.72rem;color:rgba(255,255,255,.7)">
+      Shop at Walmart, McDonald's, Target & more!
+    </div>
+  </div>
+</div>
+
+<!-- CHARACTER CREATOR SCREEN -->
+<div class="screen" id="creator-screen">
+  <div id="creator">
+    <h2>✏️ Create Your Character</h2>
+    <div class="creator-preview">
+      <canvas id="cr-canvas" width="100" height="130"></canvas>
+    </div>
+    <input id="cr-name" type="text" placeholder="Character name..." maxlength="14">
+
+    <div class="cr-section">
+      <span class="cr-label">Skin Tone</span>
+      <div class="cr-row" id="cr-skin"></div>
+    </div>
+    <div class="cr-section">
+      <span class="cr-label">Hair Style</span>
+      <div class="cr-row" id="cr-hair"></div>
+    </div>
+    <div class="cr-section">
+      <span class="cr-label">Hair Color</span>
+      <div class="cr-row" id="cr-hairc"></div>
+    </div>
+    <div class="cr-section">
+      <span class="cr-label">Eye Color</span>
+      <div class="cr-row" id="cr-eyec"></div>
+    </div>
+    <div class="cr-section">
+      <span class="cr-label">Outfit</span>
+      <div class="cr-row" id="cr-outfit"></div>
+    </div>
+    <div class="cr-section">
+      <span class="cr-label">Personality</span>
+      <div class="cr-row" id="cr-personality"></div>
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:10px">
+      <button class="btn green" onclick="saveCharacter()">✅ Save</button>
+      <button class="btn" onclick="showScreen('title-screen')">✕ Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- HUD -->
+<div id="hud" style="display:none">
+  <span style="font-size:1.3rem">💰</span>
+  <span id="hud-money">$0</span>
+  <span id="hud-day">Day 1 ☀️</span>
+  <div id="hud-btns">
+    <button class="hbtn" onclick="openPanel('chars-panel')">👥 Residents</button>
+    <button class="hbtn" onclick="openPanel('inv-panel')">🎒 Bag</button>
+    <button class="hbtn" onclick="openPanel('map-panel')">🗺️ Map</button>
+  </div>
+</div>
+
+<!-- ISLAND VIEW -->
+<div id="island-view" style="display:none">
+  <canvas id="island-canvas"></canvas>
+  <!-- Characters rendered as DOM pins for easy interaction -->
+  <div id="char-pins"></div>
+  <!-- Buildings -->
+  <div id="buildings"></div>
+</div>
+
+<!-- PANELS (slide up) -->
+
+<!-- Characters panel -->
+<div class="panel" id="chars-panel">
+  <button class="close-btn" onclick="closePanel('chars-panel')">✕</button>
+  <div class="panel-handle"></div>
+  <div class="panel-title">👥 Island Residents</div>
+  <div id="chars-list"></div>
+  <div style="text-align:center;margin-top:12px">
+    <button class="btn sm" onclick="closePanel('chars-panel');showScreen('creator-screen')">➕ Add Character</button>
+  </div>
+</div>
+
+<!-- Inventory panel -->
+<div class="panel" id="inv-panel">
+  <button class="close-btn" onclick="closePanel('inv-panel')">✕</button>
+  <div class="panel-handle"></div>
+  <div class="panel-title">🎒 Your Bag</div>
+  <div id="inv-content"></div>
+</div>
+
+<!-- Map panel -->
+<div class="panel" id="map-panel">
+  <button class="close-btn" onclick="closePanel('map-panel')">✕</button>
+  <div class="panel-handle"></div>
+  <div class="panel-title">🗺️ Island Map</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px" id="map-grid"></div>
+</div>
+
+<!-- Character profile panel -->
+<div class="panel" id="char-panel">
+  <button class="close-btn" onclick="closePanel('char-panel')">✕</button>
+  <div class="panel-handle"></div>
+  <div id="char-panel-content"></div>
+</div>
+
+<!-- Store panel -->
+<div class="panel" id="store-panel">
+  <button class="close-btn" onclick="closePanel('store-panel')">✕</button>
+  <div class="panel-handle"></div>
+  <div id="store-panel-content"></div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+</div><!-- /app -->
+<script>
+'use strict';
+
+// ══════════════════════════════════════════════════════════════
+//  DATA
+// ══════════════════════════════════════════════════════════════
+
+var SKINS  = ['#f5c8a0','#e8a878','#c87840','#a05828','#703818','#f8e0c0'];
+var HAIRC  = ['#1a0800','#5a3010','#c88030','#f0e860','#e04040','#80c0f0','#a060c0','#808080','#e8e8e8'];
+var EYEC   = ['#4488cc','#2a6a20','#885530','#222222','#cc4488','#44aacc'];
+var OUTFITS= [
+  {name:'Casual',   col:'#4488ff', col2:'#3366cc'},
+  {name:'Plaid',    col:'#cc2222', col2:'#1a1a1a'},
+  {name:'Hoodie',   col:'#666888', col2:'#444666'},
+  {name:'Walmart',  col:'#0053e2', col2:'#ffc220'},
+  {name:'Sporty',   col:'#22aa44', col2:'#188833'},
+  {name:'Fancy',    col:'#8833aa', col2:'#662288'},
+  {name:'Overalls', col:'#2255aa', col2:'#f5c870'},
+  {name:'Hawaiian', col:'#ff7722', col2:'#22aa44'},
+];
+var HAIRS  = ['Short','Long','Curly','Buzz','Bun','Spiky','Braids','Wavy'];
+var PERSONALITIES = ['Happy','Lazy','Energetic','Creative','Foodie','Social','Shy','Cool'];
+
+var STORES = [
+  {id:'walmart',   name:'Walmart',    emoji:'🏪', col:'#0053e2', desc:'Everything you need!',
+   tabs:['🍎 Food','👕 Clothing','💻 Electronics','🧸 Toys','🏠 Home'],
+   items:[
+    // Food
+    {n:'Apple',       e:'🍎', p:1,  eff:{hunger:15},          tab:0},
+    {n:'Sandwich',    e:'🥪', p:3,  eff:{hunger:35},          tab:0},
+    {n:'Pizza',       e:'🍕', p:5,  eff:{hunger:50,happy:10}, tab:0},
+    {n:'Cake',        e:'🎂', p:8,  eff:{hunger:40,happy:25}, tab:0},
+    {n:'Ramen',       e:'🍜', p:4,  eff:{hunger:45},          tab:0},
+    {n:'Ice Cream',   e:'🍦', p:3,  eff:{hunger:20,happy:20}, tab:0},
+    {n:'Soda',        e:'🥤', p:2,  eff:{hunger:10,energy:20},tab:0},
+    {n:'Coffee',      e:'☕', p:3,  eff:{energy:40},          tab:0},
+    // Clothing
+    {n:'T-Shirt',     e:'👕', p:8,  eff:{happy:10}, tab:1, wear:true},
+    {n:'Hoodie',      e:'🧥', p:15, eff:{happy:12}, tab:1, wear:true},
+    {n:'Sneakers',    e:'👟', p:20, eff:{happy:15}, tab:1, wear:true},
+    {n:'Sunglasses',  e:'🕶️', p:12, eff:{happy:18}, tab:1, wear:true},
+    {n:'Hat',         e:'🧢', p:10, eff:{happy:14}, tab:1, wear:true},
+    {n:'Dress',       e:'👗', p:18, eff:{happy:20}, tab:1, wear:true},
+    // Electronics
+    {n:'Phone',       e:'📱', p:80, eff:{happy:40,energy:10},  tab:2, keep:true},
+    {n:'Headphones',  e:'🎧', p:50, eff:{happy:30},            tab:2, keep:true},
+    {n:'TV',          e:'📺', p:120,eff:{happy:50,energy:20},  tab:2, keep:true, furniture:true},
+    {n:'Game Console',e:'🎮', p:100,eff:{happy:60},            tab:2, keep:true},
+    {n:'Laptop',      e:'💻', p:90, eff:{happy:35,energy:15},  tab:2, keep:true},
+    // Toys
+    {n:'Teddy Bear',  e:'🧸', p:10, eff:{happy:25},tab:3, keep:true},
+    {n:'Yo-Yo',       e:'🪀', p:5,  eff:{happy:15},tab:3},
+    {n:'LEGO Set',    e:'🧱', p:25, eff:{happy:35},tab:3, keep:true},
+    {n:'Balloon',     e:'🎈', p:2,  eff:{happy:12},tab:3},
+    // Home
+    {n:'Plant',       e:'🪴', p:12, eff:{happy:15},tab:4, keep:true, furniture:true},
+    {n:'Lamp',        e:'🪔', p:18, eff:{happy:10},tab:4, keep:true, furniture:true},
+    {n:'Sofa',        e:'🛋️', p:80, eff:{happy:20,energy:30},tab:4, keep:true, furniture:true},
+    {n:'Rug',         e:'🟫', p:25, eff:{happy:8}, tab:4, keep:true, furniture:true},
+   ]},
+  {id:'mcdonalds',  name:"McDonald's", emoji:'🍔', col:'#da291c', desc:'I\'m lovin\' it!',
+   tabs:['🍔 Burgers','🍟 Sides','🥤 Drinks','🍦 Desserts'],
+   items:[
+    {n:'Big Mac',      e:'🍔', p:6,  eff:{hunger:60,happy:20},tab:0},
+    {n:'Quarter Pndr', e:'🍔', p:5,  eff:{hunger:55,happy:15},tab:0},
+    {n:'McChicken',    e:'🍗', p:4,  eff:{hunger:45,happy:12},tab:0},
+    {n:'Happy Meal',   e:'🎁', p:5,  eff:{hunger:40,happy:30},tab:0},
+    {n:'Fries Lg',     e:'🍟', p:3,  eff:{hunger:30,happy:15},tab:1},
+    {n:'Fries Sm',     e:'🍟', p:2,  eff:{hunger:18,happy:8}, tab:1},
+    {n:'Hash Brown',   e:'🟡', p:2,  eff:{hunger:20,happy:10},tab:1},
+    {n:'Apple Slices', e:'🍎', p:1,  eff:{hunger:12,happy:5}, tab:1},
+    {n:'Coke',         e:'🥤', p:2,  eff:{hunger:10,energy:20},tab:2},
+    {n:'OJ',           e:'🍊', p:2,  eff:{hunger:12,energy:15},tab:2},
+    {n:'Coffee',       e:'☕', p:2,  eff:{energy:35},         tab:2},
+    {n:'Milkshake',    e:'🥛', p:4,  eff:{hunger:20,happy:20},tab:2},
+    {n:'McFlurry',     e:'🍦', p:4,  eff:{hunger:15,happy:30},tab:3},
+    {n:'Sundae',       e:'🍨', p:2,  eff:{hunger:10,happy:20},tab:3},
+    {n:'Cone',         e:'🍦', p:1,  eff:{hunger:8, happy:15},tab:3},
+    {n:'Apple Pie',    e:'🥧', p:2,  eff:{hunger:18,happy:18},tab:3},
+   ]},
+  {id:'target',     name:'Target',    emoji:'🎯', col:'#cc0000', desc:'Expect more. Pay less.',
+   tabs:['🏠 Home','👗 Clothing','🎮 Entertainment','🌿 Beauty'],
+   items:[
+    {n:'Throw Pillow', e:'🛏️', p:15, eff:{happy:12},tab:0, keep:true, furniture:true},
+    {n:'Candle',       e:'🕯️', p:8,  eff:{happy:14},tab:0, keep:true, furniture:true},
+    {n:'Photo Frame',  e:'🖼️', p:10, eff:{happy:10},tab:0, keep:true, furniture:true},
+    {n:'Bookshelf',    e:'📚', p:45, eff:{happy:20},tab:0, keep:true, furniture:true},
+    {n:'Jacket',       e:'🧥', p:22, eff:{happy:14},tab:1, wear:true},
+    {n:'Jeans',        e:'👖', p:20, eff:{happy:12},tab:1, wear:true},
+    {n:'Backpack',     e:'🎒', p:25, eff:{happy:15},tab:1, wear:true},
+    {n:'Scarf',        e:'🧣', p:12, eff:{happy:10},tab:1, wear:true},
+    {n:'Board Game',   e:'🎲', p:20, eff:{happy:35},tab:2, keep:true},
+    {n:'Book',         e:'📖', p:12, eff:{happy:20,energy:10},tab:2},
+    {n:'Music Speaker',e:'🔊', p:40, eff:{happy:28},tab:2, keep:true, furniture:true},
+    {n:'Streaming Sub',e:'🎬', p:15, eff:{happy:30},tab:2},
+    {n:'Perfume',      e:'🌸', p:20, eff:{happy:22},tab:3},
+    {n:'Lip Gloss',    e:'💄', p:8,  eff:{happy:14},tab:3},
+    {n:'Face Mask',    e:'🧖', p:5,  eff:{happy:18,energy:20},tab:3},
+    {n:'Vitamins',     e:'💊', p:10, eff:{energy:30},tab:3},
+   ]},
+  {id:'gamestop',   name:'GameStop',  emoji:'🎮', col:'#1a6b1a', desc:'Power to the players!',
+   tabs:['🎮 Games','🕹️ Consoles','🃏 Cards','👾 Merch'],
+   items:[
+    {n:'Action Game',  e:'⚔️', p:45, eff:{happy:50},tab:0, keep:true},
+    {n:'RPG Game',     e:'🗡️', p:50, eff:{happy:55},tab:0, keep:true},
+    {n:'Sports Game',  e:'⚽', p:40, eff:{happy:45},tab:0, keep:true},
+    {n:'Indie Game',   e:'🌟', p:20, eff:{happy:35},tab:0, keep:true},
+    {n:'Nintendo Sw.', e:'🟥', p:250,eff:{happy:80},tab:1, keep:true, furniture:true},
+    {n:'PS5',          e:'🎮', p:300,eff:{happy:90},tab:1, keep:true, furniture:true},
+    {n:'Controller',   e:'🕹️', p:50, eff:{happy:25},tab:1, keep:true},
+    {n:'Pokémon Cards',e:'🃏', p:15, eff:{happy:30},tab:2, keep:true},
+    {n:'Yu-Gi-Oh!',    e:'⭐', p:12, eff:{happy:28},tab:2, keep:true},
+    {n:'PupBot Plush', e:'🐶', p:18, eff:{happy:35},tab:3, keep:true},
+    {n:'Anime Figure', e:'🏆', p:25, eff:{happy:30},tab:3, keep:true},
+    {n:'Gamer Hoodie', e:'🎮', p:30, eff:{happy:25},tab:3, wear:true},
+   ]},
+  {id:'starbucks',  name:'Starbucks', emoji:'☕', col:'#00704a', desc:'Inspire and nurture.',
+   tabs:['☕ Hot','🧊 Cold','🍰 Bites'],
+   items:[
+    {n:'Latte',        e:'☕', p:6,  eff:{energy:50,happy:20},tab:0},
+    {n:'Cappuccino',   e:'☕', p:6,  eff:{energy:45,happy:18},tab:0},
+    {n:'Hot Choco',    e:'🍫', p:5,  eff:{energy:30,happy:25},tab:0},
+    {n:'Chai Tea',     e:'🍵', p:5,  eff:{energy:35,happy:20},tab:0},
+    {n:'Frap.',        e:'🧋', p:7,  eff:{energy:40,happy:30},tab:1},
+    {n:'Cold Brew',    e:'🥤', p:6,  eff:{energy:55,happy:15},tab:1},
+    {n:'Pink Drink',   e:'🌸', p:6,  eff:{energy:30,happy:35},tab:1},
+    {n:'Lemonade',     e:'🍋', p:4,  eff:{energy:20,happy:20},tab:1},
+    {n:'Croissant',    e:'🥐', p:4,  eff:{hunger:25,happy:15},tab:2},
+    {n:'Cake Pop',     e:'🍭', p:3,  eff:{hunger:10,happy:22},tab:2},
+    {n:'Brownie',      e:'🍫', p:3,  eff:{hunger:15,happy:20},tab:2},
+    {n:'Bagel',        e:'🥯', p:3,  eff:{hunger:30,happy:10},tab:2},
+   ]},
+  {id:'park',       name:'City Park', emoji:'🌳', col:'#2a8703', desc:'Relax & have fun!',
+   tabs:['🎡 Activities','🌸 Nature'],
+   items:[
+    {n:'Picnic',       e:'🧺', p:5,  eff:{hunger:30,happy:40,energy:20},tab:0},
+    {n:'Bike Ride',    e:'🚴', p:0,  eff:{happy:30,energy:-10},           tab:0},
+    {n:'Jog',          e:'🏃', p:0,  eff:{happy:20,energy:-15},           tab:0},
+    {n:'Dog Walk',     e:'🐕', p:0,  eff:{happy:35},                      tab:0},
+    {n:'Frisbee',      e:'🥏', p:2,  eff:{happy:25},                      tab:0},
+    {n:'Flowers',      e:'💐', p:3,  eff:{happy:30},                      tab:1, keep:true},
+    {n:'Rock',         e:'🪨', p:0,  eff:{happy:5},                       tab:1},
+    {n:'Acorn',        e:'🌰', p:0,  eff:{happy:8},                       tab:1},
+   ]},
+];
+
+var LOCATIONS = [
+  {id:'walmart',  name:'Walmart',    emoji:'🏪', x:.08, y:.45, w:160, h:120, col:'#0053e2', roof:'#ffc220', neonSign:true},
+  {id:'mcdonalds',name:"McDonald's", emoji:'🍔', x:.28, y:.5,  w:120, h:100, col:'#da291c', roof:'#f6c217', arches:true},
+  {id:'target',   name:'Target',     emoji:'🎯', x:.48, y:.48, w:140, h:110, col:'#cc0000', roof:'#fff'},
+  {id:'gamestop', name:'GameStop',   emoji:'🎮', x:.67, y:.5,  w:110, h:90,  col:'#1a6b1a', roof:'#f0f0f0'},
+  {id:'starbucks',name:'Starbucks',  emoji:'☕', x:.82, y:.52, w:100, h:85,  col:'#00704a', roof:'#fff'},
+  {id:'park',     name:'City Park',  emoji:'🌳', x:.9,  y:.46, w:90,  h:70,  col:'#2a8703', roof:'#5dbb63'},
+  {id:'apartments',name:'Apts',      emoji:'🏠', x:.38, y:.3,  w:130, h:100, col:'#886644', roof:'#cc4422'},
+];
+
+// ══════════════════════════════════════════════════════════════
+//  GAME STATE
+// ══════════════════════════════════════════════════════════════
+var state = {
+  money: 50,
+  day: 1,
+  time: 8, // hour
+  characters: [],
+  inventory: [],
+  activeStore: null,
+  activeChar: null,
+  storeTab: 0,
+  charTab: 0,
+};
+
+// Creator state
+var cr = {
+  name:'', skin:0, hair:0, hairc:0, eyec:0, outfit:0, personality:0
+};
+
+// ══════════════════════════════════════════════════════════════
+//  CHARACTER DRAWING
+// ══════════════════════════════════════════════════════════════
+function drawCharacter(canvas, char, scale) {
+  scale = scale||1;
+  var ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  var out = OUTFITS[char.outfit||0];
+  var sc = char.skin  !== undefined ? SKINS[char.skin]  : '#f5c8a0';
+  var hc = char.hairc !== undefined ? HAIRC[char.hairc] : '#1a0800';
+  var ec = char.eyec  !== undefined ? EYEC[char.eyec]   : '#4488cc';
+  var cx = canvas.width/2, by = canvas.height - 8;
+
+  // Shadow
+  ctx.fillStyle='rgba(0,0,0,.18)';ctx.beginPath();ctx.ellipse(cx,by-2,18*scale,5*scale,0,0,Math.PI*2);ctx.fill();
+  // Shoes
+  ctx.fillStyle='#e8e8f0';ctx.beginPath();ctx.roundRect(cx-16*scale,by-10*scale,14*scale,10*scale,4*scale);ctx.fill();
+  ctx.beginPath();ctx.roundRect(cx+2*scale,by-10*scale,14*scale,10*scale,4*scale);ctx.fill();
+  // Legs
+  ctx.fillStyle='#3060a0';ctx.beginPath();ctx.roundRect(cx-13*scale,by-28*scale,11*scale,20*scale,3*scale);ctx.fill();
+  ctx.beginPath();ctx.roundRect(cx+2*scale,by-28*scale,11*scale,20*scale,3*scale);ctx.fill();
+  // Shirt body
+  ctx.fillStyle=out.col;ctx.beginPath();ctx.roundRect(cx-16*scale,by-52*scale,32*scale,26*scale,5*scale);ctx.fill();
+  // Plaid overlay if plaid outfit
+  if(char.outfit===1){
+    ctx.strokeStyle=out.col2;ctx.lineWidth=2*scale;
+    for(var li=0;li<4;li++){ctx.beginPath();ctx.moveTo(cx-16*scale+li*8*scale,by-52*scale);ctx.lineTo(cx-16*scale+li*8*scale,by-26*scale);ctx.stroke();}
+    for(var lj=0;lj<3;lj++){ctx.beginPath();ctx.moveTo(cx-16*scale,by-46*scale+lj*8*scale);ctx.lineTo(cx+16*scale,by-46*scale+lj*8*scale);ctx.stroke();}
+  }
+  // Walmart outfit accent
+  if(char.outfit===3){
+    ctx.fillStyle=out.col2;ctx.fillRect(cx-10*scale,by-50*scale,20*scale,4*scale);
+    ctx.font='bold '+(7*scale)+'px monospace';ctx.textAlign='center';ctx.fillStyle='#ffc220';ctx.fillText('★',cx,by-40*scale);
+  }
+  // Arms
+  ctx.fillStyle=out.col;
+  ctx.beginPath();ctx.roundRect(cx-24*scale,by-50*scale,10*scale,16*scale,4*scale);ctx.fill();
+  ctx.beginPath();ctx.roundRect(cx+14*scale,by-50*scale,10*scale,16*scale,4*scale);ctx.fill();
+  // Hands
+  ctx.fillStyle=sc;ctx.beginPath();ctx.arc(cx-18*scale,by-34*scale,5*scale,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(cx+18*scale,by-34*scale,5*scale,0,Math.PI*2);ctx.fill();
+  // Neck
+  ctx.fillStyle=sc;ctx.beginPath();ctx.roundRect(cx-5*scale,by-60*scale,10*scale,11*scale,4*scale);ctx.fill();
+  // Head
+  ctx.fillStyle=sc;ctx.beginPath();ctx.ellipse(cx,by-72*scale,13*scale,14*scale,0,0,Math.PI*2);ctx.fill();
+  // Cheeks
+  ctx.globalAlpha=.3;ctx.fillStyle='#ff8080';ctx.beginPath();ctx.arc(cx-10*scale,by-68*scale,4*scale,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(cx+10*scale,by-68*scale,4*scale,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  // Hair base
+  ctx.fillStyle=hc;
+  var h=char.hair||0;
+  if(h===0){// Short
+    ctx.beginPath();ctx.ellipse(cx,by-82*scale,14*scale,10*scale,0,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.roundRect(cx-14*scale,by-82*scale,4*scale,10*scale,2*scale);ctx.fill();
+    ctx.beginPath();ctx.roundRect(cx+10*scale,by-82*scale,4*scale,10*scale,2*scale);ctx.fill();
+  }else if(h===1){// Long
+    ctx.beginPath();ctx.ellipse(cx,by-82*scale,14*scale,10*scale,0,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.roundRect(cx-13*scale,by-80*scale,6*scale,28*scale,3*scale);ctx.fill();
+    ctx.beginPath();ctx.roundRect(cx+7*scale,by-80*scale,6*scale,28*scale,3*scale);ctx.fill();
+  }else if(h===2){// Curly
+    ctx.beginPath();ctx.ellipse(cx,by-82*scale,15*scale,12*scale,0,0,Math.PI*2);ctx.fill();
+    [[-8,-88],[0,-91],[8,-88],[-12,-83],[12,-83]].forEach(function(p){ctx.beginPath();ctx.arc(cx+p[0]*scale,(by+p[1]*scale),5*scale,0,Math.PI*2);ctx.fill();});
+  }else if(h===3){// Buzz
+    ctx.fillStyle=hc;ctx.globalAlpha=.6;ctx.beginPath();ctx.ellipse(cx,by-82*scale,14*scale,10*scale,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  }else if(h===4){// Bun
+    ctx.beginPath();ctx.ellipse(cx,by-84*scale,12*scale,8*scale,0,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(cx,by-92*scale,6*scale,0,Math.PI*2);ctx.fill();
+  }else if(h===5){// Spiky
+    ctx.beginPath();ctx.ellipse(cx,by-82*scale,14*scale,10*scale,0,0,Math.PI*2);ctx.fill();
+    [-8,0,8].forEach(function(ox){ctx.beginPath();ctx.moveTo(cx+ox*scale,by-86*scale);ctx.lineTo(cx+(ox-4)*scale,by-96*scale);ctx.lineTo(cx+(ox+4)*scale,by-96*scale);ctx.closePath();ctx.fill();});
+  }else if(h===6){// Braids
+    ctx.beginPath();ctx.ellipse(cx,by-82*scale,14*scale,10*scale,0,0,Math.PI*2);ctx.fill();
+    ctx.lineWidth=5*scale;ctx.strokeStyle=hc;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(cx-8*scale,by-78*scale);ctx.lineTo(cx-8*scale,by-52*scale);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cx+8*scale,by-78*scale);ctx.lineTo(cx+8*scale,by-52*scale);ctx.stroke();
+  }else{// Wavy
+    ctx.beginPath();ctx.ellipse(cx,by-82*scale,15*scale,11*scale,0,0,Math.PI*2);ctx.fill();
+    ctx.lineWidth=6*scale;ctx.strokeStyle=hc;
+    ctx.beginPath();ctx.moveTo(cx-14*scale,by-78*scale);ctx.quadraticCurveTo(cx-18*scale,by-65*scale,cx-14*scale,by-55*scale);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(cx+14*scale,by-78*scale);ctx.quadraticCurveTo(cx+18*scale,by-65*scale,ctx+14*scale,by-55*scale);ctx.stroke();
+  }
+  // Eyes
+  ctx.fillStyle='white';ctx.beginPath();ctx.arc(cx-6*scale,by-70*scale,4*scale,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(cx+6*scale,by-70*scale,4*scale,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=ec;ctx.beginPath();ctx.arc(cx-6*scale,by-70*scale,2.5*scale,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(cx+6*scale,by-70*scale,2.5*scale,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#000';ctx.beginPath();ctx.arc(cx-6*scale,by-70*scale,1.2*scale,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(cx+6*scale,by-70*scale,1.2*scale,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='white';ctx.beginPath();ctx.arc(cx-5*scale,by-71*scale,1*scale,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(cx+7*scale,by-71*scale,1*scale,0,Math.PI*2);ctx.fill();
+  // Nose
+  ctx.strokeStyle='rgba(160,100,60,.5)';ctx.lineWidth=1*scale;ctx.lineCap='round';
+  ctx.beginPath();ctx.arc(cx,by-65*scale,2.5*scale,0,Math.PI);ctx.stroke();
+  // Smile/mood
+  var mood=char.happy!==undefined?char.happy:80;
+  ctx.strokeStyle='rgba(100,50,30,.7)';ctx.lineWidth=1.5*scale;
+  ctx.beginPath();
+  if(mood>60)ctx.arc(cx,by-63*scale,4*scale,.1,Math.PI-.1);
+  else if(mood>30)ctx.moveTo(cx-3*scale,by-62*scale),ctx.lineTo(cx+3*scale,by-62*scale);
+  else ctx.arc(cx,by-60*scale,4*scale,Math.PI+.1,-.1);
+  ctx.stroke();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  ISLAND CANVAS
+// ══════════════════════════════════════════════════════════════
+var islandCanvas, islandCtx, islandW, islandH;
+var animFrame=0, animTick=0;
+
+function initIsland() {
+  islandCanvas=document.getElementById('island-canvas');
+  var view=document.getElementById('island-view');
+  islandW=view.clientWidth; islandH=view.clientHeight;
+  islandCanvas.width=islandW; islandCanvas.height=islandH;
+  islandCtx=islandCanvas.getContext('2d');
+  renderIsland();
+}
+
+function renderIsland() {
+  var ctx=islandCtx;
+  ctx.clearRect(0,0,islandW,islandH);
+
+  // Sky
+  var hour=state.time;
+  var isDay=hour>=6&&hour<20;
+  var sky=ctx.createLinearGradient(0,0,0,islandH*.6);
+  if(isDay){sky.addColorStop(0,'#4aa8f0');sky.addColorStop(1,'#a0d8f8');}
+  else{sky.addColorStop(0,'#050820');sky.addColorStop(1,'#0a1035');}
+  ctx.fillStyle=sky;ctx.fillRect(0,0,islandW,islandH);
+
+  // Sun or moon
+  if(isDay){
+    var sunX=islandW*(.1+(hour-6)/14*.8),sunY=islandH*.12;
+    var sg=ctx.createRadialGradient(sunX,sunY,0,sunX,sunY,35);sg.addColorStop(0,'#ffe566');sg.addColorStop(.7,'#ffcc22');sg.addColorStop(1,'rgba(255,200,0,0)');
+    ctx.fillStyle=sg;ctx.beginPath();ctx.arc(sunX,sunY,35,0,Math.PI*2);ctx.fill();
+  }else{
+    ctx.fillStyle='#d8d8ff';ctx.beginPath();ctx.arc(islandW*.8,islandH*.1,22,0,Math.PI*2);ctx.fill();
+  }
+
+  // Clouds
+  [[.15,.12],[.45,.09],[.72,.14]].forEach(function(c,i){
+    var cx2=(islandW*(c[0]+animTick*.0003*(i*.5+.3)))%islandW;
+    var cy2=islandH*c[1];
+    ctx.globalAlpha=.88;
+    [[0,0,40,16],[22,-10,32,22],[44,-5,36,18]].forEach(function(r){
+      ctx.fillStyle='white';ctx.beginPath();ctx.roundRect(cx2+r[0],cy2+r[1],r[2],r[3],12);ctx.fill();
+    });
+    ctx.globalAlpha=1;
+  });
+
+  // Ocean
+  var oceanY=islandH*.62;
+  var og=ctx.createLinearGradient(0,oceanY,0,islandH);
+  og.addColorStop(0,isDay?'#1a8cff':'#0a3a6a');og.addColorStop(1,isDay?'#0066cc':'#051a3a');
+  ctx.fillStyle=og;ctx.fillRect(0,oceanY,islandW,islandH-oceanY);
+  // Ocean waves
+  ctx.strokeStyle='rgba(255,255,255,.25)';ctx.lineWidth=2;
+  for(var w=0;w<4;w++){
+    ctx.beginPath();
+    for(var x=0;x<islandW;x+=20)ctx.lineTo(x,oceanY+5+w*12+Math.sin((x+animTick*2+w*30)*.04)*4);
+    ctx.stroke();
+  }
+
+  // Island ground
+  var groundY=islandH*.55;
+  var gg=ctx.createLinearGradient(0,groundY,0,oceanY);
+  gg.addColorStop(0,isDay?'#5dbb63':'#2a5a2a');gg.addColorStop(1,isDay?'#3a9142':'#1a3a1a');
+  ctx.fillStyle=gg;
+  ctx.beginPath();ctx.moveTo(0,groundY+20);
+  ctx.quadraticCurveTo(islandW*.25,groundY-10,islandW*.5,groundY);
+  ctx.quadraticCurveTo(islandW*.75,groundY+8,islandW,groundY+15);
+  ctx.lineTo(islandW,oceanY);ctx.lineTo(0,oceanY);ctx.closePath();ctx.fill();
+
+  // Road
+  ctx.fillStyle='#555';ctx.fillRect(0,groundY+18,islandW,22);
+  ctx.strokeStyle='#ffd700';ctx.lineWidth=2;ctx.setLineDash([20,15]);
+  ctx.beginPath();ctx.moveTo(0,groundY+29);ctx.lineTo(islandW,groundY+29);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='rgba(255,255,255,.5)';ctx.fillRect(0,groundY+18,islandW,3);
+
+  // Sidewalk
+  ctx.fillStyle='#ccc';ctx.fillRect(0,groundY+40,islandW,12);
+
+  // Buildings
+  LOCATIONS.forEach(function(loc){
+    var bx=islandW*loc.x, by=groundY+40;
+    var bw=loc.w*.9,bh=loc.h*.9;
+    // Shadow
+    ctx.globalAlpha=.18;ctx.fillStyle='#000';ctx.beginPath();ctx.ellipse(bx+bw/2,by+bh-5,bw/2,8,0,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+    // Building body
+    var bg2=ctx.createLinearGradient(bx,by,bx+bw,by+bh);bg2.addColorStop(0,lighten(loc.col,.2));bg2.addColorStop(1,loc.col);
+    ctx.fillStyle=bg2;ctx.beginPath();ctx.roundRect(bx,by-bh,bw,bh,6);ctx.fill();
+    // Roof
+    ctx.fillStyle=loc.roof;ctx.beginPath();ctx.roundRect(bx-4,by-bh-12,bw+8,16,4);ctx.fill();
+    // Windows grid
+    ctx.fillStyle='rgba(200,230,255,.7)';
+    for(var wr=0;wr<2;wr++)for(var wc=0;wc<3;wc++){
+      var wx2=bx+8+wc*(bw/3-2),wy2=by-bh+14+wr*28;
+      if(wx2+20<bx+bw-8)ctx.fillRect(wx2,wy2,bw/3-8,18);
+    }
+    // Store sign
+    ctx.fillStyle='rgba(0,0,0,.75)';ctx.beginPath();ctx.roundRect(bx+bw/2-35,by-bh+4,70,22,5);ctx.fill();
+    ctx.font='bold 11px Arial';ctx.textAlign='center';ctx.fillStyle='#fff';ctx.fillText(loc.name,bx+bw/2,by-bh+19);
+    // Emoji sign
+    ctx.font='22px serif';ctx.fillText(loc.emoji,bx+bw/2,by-bh-4);
+    // Walmart specific
+    if(loc.id==='walmart'){
+      ctx.fillStyle='#ffc220';ctx.font='bold 9px Arial';ctx.fillText('★ WALMART ★',bx+bw/2,by-bh+46);
+    }
+    // McDonald's arches
+    if(loc.arches){
+      ctx.strokeStyle='#f6c217';ctx.lineWidth=6;ctx.lineCap='round';
+      ctx.beginPath();ctx.arc(bx+bw/2-10,by-4,14,Math.PI,0);ctx.stroke();
+      ctx.beginPath();ctx.arc(bx+bw/2+10,by-4,14,Math.PI,0);ctx.stroke();
+    }
+    // Door
+    ctx.fillStyle='rgba(0,0,0,.6)';ctx.beginPath();ctx.roundRect(bx+bw/2-10,by-22,20,22,[8,8,0,0]);ctx.fill();
+  });
+
+  // Trees
+  [[.04,.52],[.24,.5],[.62,.51],[.95,.53]].forEach(function(t){
+    var tx=islandW*t[0], ty=groundY+islandH*(t[1]-.55);
+    ctx.fillStyle=isDay?'#4a8a20':'#243812';ctx.beginPath();ctx.arc(tx,ty-25,22,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle=isDay?'#5aaa28':'#2a4a18';ctx.beginPath();ctx.arc(tx+4,ty-35,16,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#5a3010';ctx.fillRect(tx-5,ty-10,10,22);
+  });
+}
+
+function lighten(hex, amt) {
+  var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  r=Math.min(255,r+Math.round(amt*255));g=Math.min(255,g+Math.round(amt*255));b=Math.min(255,b+Math.round(amt*255));
+  return '#'+r.toString(16).padStart(2,'0')+g.toString(16).padStart(2,'0')+b.toString(16).padStart(2,'0');
+}
+
+// ══════════════════════════════════════════════════════════════
+//  CHARACTER PINS ON ISLAND
+// ══════════════════════════════════════════════════════════════
+function refreshPins() {
+  var container=document.getElementById('char-pins');
+  container.innerHTML='';
+  state.characters.forEach(function(char,idx){
+    var view=document.getElementById('island-view');
+    var iw=view.clientWidth, ih=view.clientHeight;
+    var groundY=ih*.55;
+    // Spread chars along the sidewalk
+    var xPct=.12+idx*.14;var yBase=groundY+45;
+    var pin=document.createElement('div');
+    pin.className='char-pin';
+    pin.style.left=Math.round(iw*xPct-28)+'px';
+    pin.style.top=Math.round(yBase-80)+'px';
+    pin.style.width='56px';
+    // Speech bubble
+    var bub=document.createElement('div');bub.className='char-bubble';
+    bub.textContent=getCharMood(char);pin.appendChild(bub);
+    // Canvas sprite
+    var cv2=document.createElement('canvas');cv2.width=56;cv2.height=90;
+    drawCharacter(cv2,char,.85);pin.appendChild(cv2);
+    // Name
+    var nm=document.createElement('div');nm.className='char-name';nm.textContent=char.name;pin.appendChild(nm);
+    pin.onclick=function(){openCharProfile(idx);};
+    container.appendChild(pin);
+    // Animate walk
+    char._x=char._x||iw*xPct;
+    char._dir=char._dir||1;
+  });
+}
+
+function getCharMood(c){
+  var avg=(c.hunger+c.happy+c.energy)/3;
+  if(c.hunger<20)return'🍔 Hungry!';
+  if(c.energy<20)return'😴 Tired!';
+  if(c.happy<20)return'😢 Sad!';
+  if(avg>80)return'😄 Great!';
+  if(avg>60)return'🙂 Good!';
+  return'😐 Okay';
+}
+
+// ══════════════════════════════════════════════════════════════
+//  CHARACTER CREATOR
+// ══════════════════════════════════════════════════════════════
+function buildCreator() {
+  // Skin swatches
+  buildSwatches('cr-skin', SKINS, 'skin');
+  // Hair styles as chips
+  buildChips('cr-hair', HAIRS, 'hair');
+  // Hair colors
+  buildSwatches('cr-hairc', HAIRC, 'hairc');
+  // Eye colors
+  buildSwatches('cr-eyec', EYEC, 'eyec');
+  // Outfits
+  buildChips('cr-outfit', OUTFITS.map(function(o){return o.name;}), 'outfit');
+  // Personalities
+  buildChips('cr-personality', PERSONALITIES, 'personality');
+  updateCreatorPreview();
+}
+
+function buildSwatches(id, colors, field) {
+  var el=document.getElementById(id);el.innerHTML='';
+  colors.forEach(function(col,i){
+    var sw=document.createElement('div');sw.className='cr-swatch'+(cr[field]===i?' sel':'');
+    sw.style.background=col;
+    sw.onclick=function(){cr[field]=i;el.querySelectorAll('.cr-swatch').forEach(function(s){s.classList.remove('sel');});sw.classList.add('sel');updateCreatorPreview();};
+    el.appendChild(sw);
+  });
+}
+
+function buildChips(id, labels, field) {
+  var el=document.getElementById(id);el.innerHTML='';
+  labels.forEach(function(lbl,i){
+    var ch=document.createElement('div');ch.className='cr-chip'+(cr[field]===i?' sel':'');ch.textContent=lbl;
+    ch.onclick=function(){cr[field]=i;el.querySelectorAll('.cr-chip').forEach(function(c){c.classList.remove('sel');});ch.classList.add('sel');updateCreatorPreview();};
+    el.appendChild(ch);
+  });
+}
+
+function updateCreatorPreview() {
+  var cv2=document.getElementById('cr-canvas');
+  var char={skin:cr.skin,hair:cr.hair,hairc:cr.hairc,eyec:cr.eyec,outfit:cr.outfit,happy:80};
+  drawCharacter(cv2,char,.75);
+}
+
+function saveCharacter() {
+  var name=(document.getElementById('cr-name').value||'').trim();
+  if(!name){alert('Please enter a name!');return;}
+  if(state.characters.length>=8){alert('Island is full! (Max 8 residents)');return;}
+  var char={name:name,skin:cr.skin,hair:cr.hair,hairc:cr.hairc,eyec:cr.eyec,outfit:cr.outfit,
+    personality:cr.personality,hunger:80,happy:80,energy:80,
+    inventory:[],furniture:[],relationships:{},coins:0,_x:0,_dir:1};
+  state.characters.push(char);
+  toast('Welcome to the island, '+name+'! 🎉');
+  showScreen('title-screen');
+  if(document.getElementById('island-view').style.display!=='none')refreshPins();
+  cr={name:'',skin:0,hair:0,hairc:0,eyec:0,outfit:0,personality:0};
+  document.getElementById('cr-name').value='';
+}
+
+// ══════════════════════════════════════════════════════════════
+//  GAME START
+// ══════════════════════════════════════════════════════════════
+function startGame() {
+  if(state.characters.length===0){
+    toast('Create at least one character first! ✏️');showScreen('creator-screen');buildCreator();return;
+  }
+  showScreen(null);
+  document.getElementById('hud').style.display='flex';
+  document.getElementById('island-view').style.display='block';
+  setTimeout(function(){initIsland();refreshPins();startGameLoop();},50);
+}
+
+function startGameLoop() {
+  function loop(){
+    animTick++;
+    if(animTick%3===0)renderIsland();
+    // Time progression
+    if(animTick%900===0){
+      state.time=(state.time+1)%24;
+      if(state.time===0)nextDay();
+      updateHUD();
+    }
+    // Decay needs slowly
+    if(animTick%600===0){
+      state.characters.forEach(function(c){
+        c.hunger=Math.max(0,c.hunger-2);c.happy=Math.max(0,c.happy-1);c.energy=Math.max(0,c.energy-1);
+      });
+      refreshPins();
+    }
+    // Earn a bit of money over time
+    if(animTick%1800===0){state.money+=Math.floor(5+Math.random()*8);updateHUD();}
+    requestAnimationFrame(loop);
+  }
+  loop();
+}
+
+function nextDay(){
+  state.day++;state.time=8;
+  state.money+=30;// Daily allowance
+  state.characters.forEach(function(c){c.energy=Math.min(100,c.energy+40);});
+  toast('Good morning! Day '+state.day+' ☀️ +$30 daily allowance!');
+  updateHUD();refreshPins();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  CHARACTER PROFILE
+// ══════════════════════════════════════════════════════════════
+function openCharProfile(idx) {
+  state.activeChar=idx;var char=state.characters[idx];state.charTab=0;
+  renderCharPanel();openPanel('char-panel');
+}
+
+function renderCharPanel() {
+  var char=state.characters[state.activeChar];
+  var el=document.getElementById('char-panel-content');
+  var tabs=['🧡 Profile','🎁 Give','🏠 Room','💕 Relations'];
+  var html='<div class="panel-title">'+char.name+'</div>';
+  html+='<div class="tabs">';
+  tabs.forEach(function(t,i){html+='<div class="tab'+(state.charTab===i?' active':'')+'" onclick="charTab('+i+')">'+t+'</div>';});
+  html+='</div>';
+
+  if(state.charTab===0){
+    // Sprite + needs
+    html+='<div style="display:flex;gap:16px;align-items:center;margin-bottom:14px">';
+    html+='<canvas id="cp-canvas" width="80" height="100"></canvas>';
+    html+='<div style="flex:1">';
+    html+='<div style="font-weight:700;color:#333;margin-bottom:4px">'+PERSONALITIES[char.personality||0]+' personality</div>';
+    html+='<div style="font-size:.7rem;color:#888;margin-bottom:8px">Outfit: '+OUTFITS[char.outfit||0].name+'</div>';
+    var needs=[['🍔','Hunger',char.hunger,'#e67e22'],['😊','Happiness',char.happy,'#e74c3c'],['⚡','Energy',char.energy,'#3498db']];
+    needs.forEach(function(n){html+='<div class="need-row"><span class="need-icon">'+n[0]+'</span><div class="need-bar-bg"><div class="need-bar-fill" style="width:'+n[2]+'%;background:'+n[3]+'"></div></div><span class="need-val">'+n[2]+'</span></div>';});
+    html+='</div></div>';
+    // Quick actions
+    html+='<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">';
+    html+='<button class="btn sm green" onclick="playWithChar()">🎮 Play</button>';
+    html+='<button class="btn sm" onclick="chatWithChar()">💬 Chat</button>';
+    html+='<button class="btn sm gold" onclick="charTab(1)">🎁 Give Gift</button>';
+    html+='</div>';
+  }else if(state.charTab===1){
+    // Inventory to give
+    html+='<div style="font-size:.75rem;color:#888;margin-bottom:8px">Tap an item to give it to '+char.name+'</div>';
+    if(state.inventory.length===0){html+='<div style="text-align:center;color:#aaa;padding:20px">Your bag is empty!<br>Visit a store to buy items.</div>';}
+    html+='<div class="inv-grid" id="inv-give"></div>';
+  }else if(state.charTab===2){
+    // Room / furniture
+    html+='<div class="apt-room" id="apt-room">';
+    (char.furniture||[]).forEach(function(f){html+='<div class="furniture" title="'+f.n+'">'+f.e+'</div>';});
+    if(!char.furniture||!char.furniture.length)html+='<div style="color:#aaa;font-size:.75rem;margin:auto">No furniture yet! Give items from Walmart/Target.</div>';
+    html+='</div>';
+    html+='<div style="font-size:.72rem;color:#888">Give furniture items from your bag to decorate the room.</div>';
+  }else{
+    // Relationships
+    html+='<div>';
+    var others=state.characters.filter(function(_,i){return i!==state.activeChar;});
+    if(!others.length){html+='<div style="text-align:center;color:#aaa;padding:20px">No other residents yet!</div>';}
+    others.forEach(function(other){
+      var rel=char.relationships[other.name]||0;
+      var hearts='';for(var h=0;h<5;h++)hearts+=h<Math.floor(rel/20)?'❤️':'🤍';
+      html+='<div class="rel-row"><span style="font-size:1.1rem">👤</span><span style="flex:1;font-weight:700;font-size:.85rem">'+other.name+'</span><span class="rel-hearts">'+hearts+'</span><span style="font-size:.68rem;color:#888;margin-left:6px">'+rel+'%</span></div>';
+    });
+    html+='</div>';
+  }
+
+  el.innerHTML=html;
+  if(state.charTab===0){
+    var cv2=document.getElementById('cp-canvas');if(cv2)drawCharacter(cv2,char,.75);
+  }
+  if(state.charTab===1){
+    var ig=document.getElementById('inv-give');
+    if(ig)state.inventory.forEach(function(item,i){
+      var d=document.createElement('div');d.className='inv-item';
+      d.innerHTML='<span class="ii-ico">'+item.e+'</span><span class="ii-name">'+item.n+'</span>';
+      d.onclick=function(){giveItemToChar(i);};ig.appendChild(d);
+    });
+  }
+}
+
+function charTab(i){state.charTab=i;renderCharPanel();}
+
+function playWithChar(){
+  var c=state.characters[state.activeChar];c.happy=Math.min(100,c.happy+20);c.energy=Math.max(0,c.energy-10);
+  toast(c.name+' had fun playing! 🎮 +20 Happy');renderCharPanel();refreshPins();
+}
+function chatWithChar(){
+  var c=state.characters[state.activeChar];c.happy=Math.min(100,c.happy+12);
+  var msgs=['loves chatting!','says thanks for visiting!','feels less lonely now!','is happy to see you!'];
+  toast(c.name+' '+msgs[Math.floor(Math.random()*msgs.length)]+' 💬');renderCharPanel();refreshPins();
+}
+
+function giveItemToChar(invIdx){
+  var char=state.characters[state.activeChar];var item=state.inventory[invIdx];
+  if(!item)return;
+  // Apply effects
+  if(item.eff){
+    if(item.eff.hunger)char.hunger=Math.min(100,char.hunger+(item.eff.hunger||0));
+    if(item.eff.happy)char.happy=Math.min(100,char.happy+(item.eff.happy||0));
+    if(item.eff.energy)char.energy=Math.min(100,char.energy+(item.eff.energy||0));
+  }
+  // Furniture goes to room, wearables change outfit, consumables disappear
+  if(item.furniture){char.furniture=char.furniture||[];char.furniture.push({e:item.e,n:item.n});}
+  if(!item.keep)state.inventory.splice(invIdx,1);
+  // Relationship boost
+  state.characters.forEach(function(other,oi){if(oi!==state.activeChar){char.relationships[other.name]=Math.min(100,(char.relationships[other.name]||0)+3);}});
+  toast(char.name+' loves the '+item.n+'! ❤️');
+  renderCharPanel();refreshPins();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  STORES
+// ══════════════════════════════════════════════════════════════
+function openStore(storeId) {
+  var store=STORES.find(function(s){return s.id===storeId;});
+  if(!store)return;
+  state.activeStore=store;state.storeTab=0;
+  renderStorePanel();openPanel('store-panel');
+}
+
+function renderStorePanel() {
+  var store=state.activeStore;
+  var el=document.getElementById('store-panel-content');
+  // Store header
+  var storeColor=LOCATIONS.find(function(l){return l.id===store.id;});
+  var col=storeColor?storeColor.col:'#0053e2';
+  var html='<div style="background:'+col+';color:#fff;border-radius:12px;padding:12px;margin-bottom:12px;display:flex;align-items:center;gap:10px">';
+  html+='<span style="font-size:2rem">'+store.emoji+'</span>';
+  html+='<div><div style="font-size:1.1rem;font-weight:900">'+store.name+'</div><div style="font-size:.72rem;opacity:.85">'+store.desc+'</div></div>';
+  html+='<div style="margin-left:auto;font-size:1rem;font-weight:700;background:rgba(255,255,255,.2);padding:6px 12px;border-radius:20px">💰 $'+state.money+'</div>';
+  html+='</div>';
+  // Tabs
+  html+='<div class="tabs">';
+  store.tabs.forEach(function(t,i){html+='<div class="tab'+(state.storeTab===i?' active':'')+'" onclick="storeTab('+i+')">'+t+'</div>';});
+  html+='</div>';
+  // Items for current tab
+  html+='<div class="store-grid" id="store-items"></div>';
+  el.innerHTML=html;
+  var grid=document.getElementById('store-items');
+  store.items.filter(function(it){return it.tab===state.storeTab;}).forEach(function(item){
+    var d=document.createElement('div');d.className='store-item';
+    var effs=Object.entries(item.eff).map(function(e){return e[1]>0?'+'+e[1]+' '+e[0]:'';}).filter(Boolean).join(' ');
+    d.innerHTML='<span class="si-ico">'+item.e+'</span><div class="si-name">'+item.n+'</div><div class="si-price">'+(item.p>0?'$'+item.p:'FREE')+'</div><div class="si-effect">'+effs+'</div>';
+    d.onclick=function(){buyItem(item);};grid.appendChild(d);
+  });
+}
+
+function storeTab(i){state.storeTab=i;renderStorePanel();}
+
+function buyItem(item){
+  if(item.p>state.money){toast('Not enough money! 💸');return;}
+  state.money-=item.p;
+  // Add to inventory (consumable or keep)
+  state.inventory.push({e:item.e,n:item.n,eff:item.eff,keep:item.keep,furniture:item.furniture,wear:item.wear});
+  toast('Bought '+item.n+'! 🛍️ ('+(item.p>0?'$'+item.p+' spent':'Free!')+')');
+  updateHUD();renderStorePanel();
+}
+
+// Building clicks on island
+function setupBuildingClicks() {
+  var canvas=document.getElementById('island-canvas');
+  canvas.addEventListener('click',function(e){
+    var rect=canvas.getBoundingClientRect();
+    var cx2=e.clientX-rect.left, cy2=e.clientY-rect.top;
+    var groundY=canvas.height*.55;
+    LOCATIONS.forEach(function(loc){
+      var bx=canvas.width*loc.x,by=groundY+40;
+      var bw=loc.w*.9,bh=loc.h*.9;
+      if(cx2>=bx&&cx2<=bx+bw&&cy2>=by-bh&&cy2<=by){
+        if(loc.id==='apartments'){openPanel('chars-panel');}
+        else openStore(loc.id);
+      }
+    });
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+//  HUD & MAP
+// ══════════════════════════════════════════════════════════════
+function updateHUD(){
+  document.getElementById('hud-money').textContent='$'+state.money;
+  var hr=state.time,am=hr<12?'AM':'PM';var h=hr%12||12;
+  document.getElementById('hud-day').textContent='Day '+state.day+' '+h+':00'+(state.time<6||state.time>=20?'🌙':'☀️');
+}
+
+function openMapPanel(){
+  var grid=document.getElementById('map-grid');grid.innerHTML='';
+  LOCATIONS.forEach(function(loc){
+    var lc=STORES.find(function(s){return s.id===loc.id;})||{};
+    var d=document.createElement('div');
+    d.style.cssText='background:#f8f8f8;border:2px solid #eee;border-radius:10px;padding:12px;text-align:center;cursor:pointer';
+    d.innerHTML='<div style="font-size:1.8rem">'+loc.emoji+'</div><div style="font-size:.75rem;font-weight:700;color:#333;margin-top:4px">'+loc.name+'</div>';
+    d.onclick=function(){closePanel('map-panel');if(loc.id!=='apartments')openStore(loc.id);else openPanel('chars-panel');};
+    grid.appendChild(d);
+  });
+  openPanel('map-panel');
+}
+
+// ══════════════════════════════════════════════════════════════
+//  PANEL / SCREEN HELPERS
+// ══════════════════════════════════════════════════════════════
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  if(id){var el=document.getElementById(id);if(el)el.classList.add('active');}
+  if(id==='creator-screen')buildCreator();
+}
+
+function openPanel(id){
+  // Special render for some panels
+  if(id==='inv-panel'){
+    var ic=document.getElementById('inv-content');ic.innerHTML='';
+    if(!state.inventory.length){ic.innerHTML='<div style="text-align:center;color:#aaa;padding:20px">Your bag is empty!<br>Visit a store to buy items. 🛍️</div>';return;}
+    var grid=document.createElement('div');grid.className='inv-grid';
+    state.inventory.forEach(function(item,i){
+      var d=document.createElement('div');d.className='inv-item';
+      d.innerHTML='<span class="ii-ico">'+item.e+'</span><span class="ii-name">'+item.n+'</span>';
+      grid.appendChild(d);
+    });
+    ic.appendChild(grid);
+  }
+  if(id==='chars-panel'){
+    var cl=document.getElementById('chars-list');cl.innerHTML='';
+    if(!state.characters.length){cl.innerHTML='<div style="text-align:center;color:#aaa;padding:20px">No residents yet!</div>';}
+    state.characters.forEach(function(c,i){
+      var row=document.createElement('div');
+      row.style.cssText='display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f0f0f0;cursor:pointer';
+      var cv2=document.createElement('canvas');cv2.width=50;cv2.height=65;drawCharacter(cv2,c,.5);
+      var info=document.createElement('div');info.style.flex='1';
+      var avg=Math.round((c.hunger+c.happy+c.energy)/3);
+      info.innerHTML='<div style="font-weight:700;color:#333">'+c.name+'</div><div style="font-size:.7rem;color:#888">'+PERSONALITIES[c.personality||0]+'</div><div style="font-size:.68rem;margin-top:4px"><span style="color:'+(avg>60?'#2a8703':'#ea1100')+'">■</span> '+avg+'% overall</div>';
+      var btn=document.createElement('button');btn.className='btn sm';btn.textContent='Visit';btn.onclick=function(){closePanel('chars-panel');openCharProfile(i);};
+      row.appendChild(cv2);row.appendChild(info);row.appendChild(btn);cl.appendChild(row);
+    });
+  }
+  if(id==='map-panel')openMapPanel();
+  document.getElementById(id).classList.add('open');
+}
+function closePanel(id){document.getElementById(id).classList.remove('open');}
+
+// ══════════════════════════════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════════════════════════════
+var _toastTimer;
+function toast(msg){
+  var el=document.getElementById('toast');el.textContent=msg;el.style.opacity='1';
+  clearTimeout(_toastTimer);_toastTimer=setTimeout(function(){el.style.opacity='0';},3200);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════════════════════
+// Island building clicks — set up after island shown
+var _islandClickSetup=false;
+var origOpenPanel=openPanel;
+function openPanel(id){
+  if(!_islandClickSetup&&document.getElementById('island-canvas')&&document.getElementById('island-canvas').width>0){
+    setupBuildingClicks();_islandClickSetup=true;
+  }
+  origOpenPanel(id);
+}
+
+// Resize
+window.addEventListener('resize',function(){
+  if(islandCanvas&&islandCtx){
+    var view=document.getElementById('island-view');
+    islandW=view.clientWidth;islandH=view.clientHeight;
+    islandCanvas.width=islandW;islandCanvas.height=islandH;
+    renderIsland();refreshPins();
+  }
+});
+
+// Island view click for buildings (also attach directly)
+document.getElementById('island-view').addEventListener('click',function(e){
+  if(!islandCanvas||!islandCtx)return;
+  var rect=islandCanvas.getBoundingClientRect();
+  var cx2=e.clientX-rect.left,cy2=e.clientY-rect.top;
+  var groundY=islandH*.55;
+  LOCATIONS.forEach(function(loc){
+    var bx=islandW*loc.x,by=groundY+40,bw=loc.w*.9,bh=loc.h*.9;
+    if(cx2>=bx&&cx2<=bx+bw&&cy2>=by-bh&&cy2<=by){
+      if(loc.id==='apartments')openPanel('chars-panel');else openStore(loc.id);
+    }
+  });
+});
+</script>
+</body>
+</html>
